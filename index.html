@@ -1,0 +1,1348 @@
+<!DOCTYPE html>
+<html lang="en" >
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dungeon Game - Adventure Login & Gameplay</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Material+Icons" rel="stylesheet" />
+  <style>
+    :root {
+      --color-bg: #121212;
+      --color-primary: #8b5cf6;
+      --color-primary-dark: #6d46c8;
+      --color-primary-light: #b794f6;
+      --color-text: #e0def4;
+      --color-text-muted: #a1a1aa;
+      --color-border: #292929;
+      --color-success: #22c55e;
+      --color-danger: #ef4444;
+      --font-family: 'Inter', system-ui, sans-serif;
+      --transition-speed: 0.3s;
+      --safe-area-inset-top: env(safe-area-inset-top);
+    }
+
+    /* Global */
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      background: linear-gradient(135deg, #1e1b2f, #302b63);
+      font-family: var(--font-family);
+      color: var(--color-text);
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      padding: 24px 12px;
+      user-select: none;
+      overflow-x: hidden;
+    }
+
+    /* Container */
+    #game-container {
+      max-width: 700px;
+      width: 100%;
+      background: #232034;
+      border-radius: 16px;
+      box-shadow: 0 12px 38px rgba(139, 92, 246, 0.5);
+      display: flex;
+      flex-direction: column;
+      padding: 28px 36px;
+      gap: 28px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Header */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--color-border);
+      user-select: none;
+    }
+    header h1 {
+      font-weight: 800;
+      font-size: 2.25rem;
+      color: var(--color-primary-light);
+      letter-spacing: 2px;
+      text-shadow: 0 2px 4px rgba(139,92,246,0.7);
+      user-select: none;
+      margin: 0;
+    }
+    .level-display {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--color-primary-light);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      user-select: none;
+      margin-left: 12px;
+    }
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    /* Logout Button */
+    #logout-btn {
+      background: var(--color-danger);
+      border: none;
+      color: white;
+      font-weight: 700;
+      font-size: 0.9rem;
+      padding: 8px 18px;
+      border-radius: 32px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 4px 18px rgba(239, 68, 68, 0.8);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      transition: background-color 0.3s ease, transform 0.2s ease;
+      user-select: none;
+    }
+    #logout-btn:hover, #logout-btn:focus-visible {
+      background-color: #d13434;
+      outline: none;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 22px rgba(239, 68, 68, 1);
+    }
+    #logout-btn:focus-visible {
+      outline: 3px solid #f87171;
+      outline-offset: 4px;
+    }
+
+    /* Health Bars */
+    .status-row {
+      display: flex;
+      align-items: center;
+      font-weight: 700;
+      font-size: 1rem;
+      gap: 12px;
+      color: var(--color-text-muted);
+      user-select: none;
+      letter-spacing: 0.04em;
+    }
+    .status-row strong {
+      color: var(--color-text);
+      margin-right: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .health-bar-container {
+      flex-shrink: 0;
+      width: 160px;
+      height: 22px;
+      background: var(--color-border);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: inset 0 1px 3px rgb(0 0 0 / 0.3);
+      border: 1.5px solid rgba(139,92,246,0.3);
+      position: relative;
+    }
+    .health-bar {
+      height: 100%;
+      background: var(--color-success);
+      border-radius: 12px 0 0 12px;
+      transition: width var(--transition-speed) ease;
+      box-shadow:
+        0 0 8px 2px rgba(34, 197, 94, 0.4),
+        inset 0 0 10px 3px rgba(34, 197, 94, 0.6);
+    }
+    .health-bar.low {
+      background: var(--color-danger);
+      box-shadow:
+        0 0 8px 2px rgba(239, 68, 68, 0.6),
+        inset 0 0 14px 3px rgba(239, 68, 68, 0.9);
+    }
+    .health-text {
+      min-width: 80px;
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--color-text);
+      user-select: text;
+      text-align: right;
+    }
+
+    /* Element Badges for player and enemy */
+    .element-badges {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-left: 4px;
+    }
+    .element-badge {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      background: linear-gradient(135deg, #ff6b6b, #f06595);
+      color: white;
+      border-radius: 14px;
+      padding: 2px 10px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      user-select: none;
+      box-shadow: 0 0 8px 1px rgba(255, 107, 107, 0.8);
+      white-space: nowrap;
+      text-transform: uppercase;
+    }
+    .element-badge.lightning {
+      background: linear-gradient(135deg, #a8e063, #56ab2f);
+      box-shadow: 0 0 10px 2px rgba(170, 220, 80, 0.9);
+    }
+    .element-badge .material-icons {
+      font-size: 16px;
+      filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.3));
+      user-select: none;
+    }
+
+    /* Main */
+    main {
+      flex: 1 1 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+      min-height: 320px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Dungeon Exploration */
+    #dungeon-exploration {
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+      animation: fadeInUp 0.8s ease forwards;
+    }
+    #exploration-description {
+      border: 1px solid var(--color-border);
+      border-radius: 16px;
+      padding: 26px 32px;
+      background: #2a2446;
+      font-size: 1.125rem;
+      line-height: 1.6;
+      min-height: 160px;
+      outline: none;
+      color: var(--color-text);
+      box-shadow:
+        inset 0 0 6px 2px rgba(139, 92, 246, 0.6);
+      font-weight: 600;
+      user-select: text;
+      text-shadow: 0 0 5px rgba(94, 83, 141, 0.9);
+      transition: background-color 0.4s ease;
+      position: relative;
+      overflow-wrap: break-word;
+    }
+    #exploration-description.animate-glow {
+      animation: glowPulse 2.5s infinite ease-in-out;
+    }
+    #exploration-controls {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+    }
+    button#explore-continue-btn {
+      background: var(--color-primary);
+      color: white;
+      border: none;
+      border-radius: 32px;
+      padding: 16px 42px;
+      font-weight: 700;
+      font-size: 1.125rem;
+      cursor: pointer;
+      box-shadow: 0 8px 20px rgba(139, 92, 246, 0.7);
+      transition: background-color 0.4s ease, transform 0.3s ease;
+      user-select: none;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      text-shadow: 0 0 6px rgba(139, 92, 246, 0.9);
+    }
+    button#explore-continue-btn:hover, button#explore-continue-btn:focus-visible {
+      background-color: var(--color-primary-light);
+      box-shadow: 0 12px 30px rgba(207, 148, 255, 0.85);
+      transform: translateY(-3px);
+      outline: none;
+    }
+    button#explore-continue-btn:focus-visible {
+      outline: 3px solid var(--color-primary-light);
+      outline-offset: 3px;
+    }
+
+    /* Fight Section */
+    #fight-section {
+      display: none;
+      flex-direction: column;
+      gap: 28px;
+      user-select: none;
+      animation: fadeInUp 0.8s ease forwards;
+    }
+    .dungeon-description {
+      border: 1px solid var(--color-border);
+      border-radius: 16px;
+      padding: 26px 30px;
+      background: #2a2446dd;
+      font-size: 1.1rem;
+      line-height: 1.5;
+      min-height: 140px;
+      user-select: none;
+      outline: none;
+      color: var(--color-text-light);
+      font-weight: 600;
+      box-shadow:
+        inset 0 0 12px 3px rgba(186, 154, 255, 0.9);
+      text-shadow: 0 0 10px rgba(224, 222, 244, 0.85);
+    }
+    .dialog-container {
+      border: 1px solid var(--color-border);
+      border-radius: 12px;
+      padding: 16px 24px;
+      background: #271f3edd;
+      font-size: 1rem;
+      line-height: 1.4;
+      max-height: 180px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      color: var(--color-text-light);
+      font-weight: 600;
+      user-select: text;
+      box-shadow:
+        inset 0 0 15px 4px rgba(139, 92, 246, 0.8);
+      text-shadow: 0 0 5px rgba(186, 154, 255, 0.9);
+    }
+    .dialog-entry {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      opacity: 0;
+      transform: translateY(12px);
+      animation: dialogFadeSlide 0.4s forwards;
+      user-select: text;
+    }
+    .dialog-entry:nth-child(odd) {
+      animation-delay: 0.15s;
+    }
+    .dialog-entry:nth-child(even) {
+      animation-delay: 0.3s;
+    }
+    .dialog-entry.player {
+      justify-content: flex-start;
+      color: var(--color-primary-light);
+      text-shadow: 0 0 6px rgba(139, 92, 246, 1);
+    }
+    .dialog-entry.enemy {
+      justify-content: flex-end;
+      color: var(--color-danger);
+      text-shadow: 0 0 8px rgba(239, 68, 68, 0.9);
+    }
+    .dialog-entry .material-icons {
+      font-size: 30px;
+      user-select: none;
+      line-height: 1;
+      filter: drop-shadow(0 0 1px rgba(0,0,0,0.25));
+    }
+    .dialog-entry.player .material-icons {
+      color: var(--color-primary-light);
+    }
+    .dialog-entry.enemy .material-icons {
+      color: var(--color-danger);
+    }
+    .actions-container {
+      display: flex;
+      gap: 22px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    button.action-btn {
+      background: var(--color-primary);
+      color: white;
+      border: none;
+      border-radius: 48px;
+      padding: 18px 38px;
+      font-weight: 800;
+      font-size: 1.125rem;
+      cursor: pointer;
+      box-shadow: 0 8px 26px rgba(139, 92, 246, 0.6);
+      transition: background-color 0.4s ease, transform 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      user-select: none;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      text-shadow: 0 0 10px rgba(139, 92, 246, 0.8);
+    }
+    button.action-btn:disabled {
+      background: #6f62b8;
+      cursor: not-allowed;
+      box-shadow: none;
+      color: #ccc;
+      text-shadow: none;
+    }
+    button.action-btn:hover:not(:disabled), button.action-btn:focus-visible:not(:disabled) {
+      background-color: var(--color-primary-light);
+      box-shadow: 0 12px 30px rgba(207, 148, 255, 0.85);
+      transform: translateY(-3px);
+      outline: none;
+      color: #fff;
+    }
+    button.action-btn:focus-visible {
+      outline: 3px solid var(--color-primary-light);
+      outline-offset: 3px;
+    }
+
+    /* Animations */
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(12px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    @keyframes glowPulse {
+      0%,100% {
+        box-shadow:
+          inset 0 0 10px 3px rgba(139, 92, 246, 0.6);
+      }
+      50% {
+        box-shadow:
+          inset 0 0 24px 8px rgba(187, 153, 255, 1);
+      }
+    }
+    @keyframes flash-red {
+      0%, 100% { background-color: transparent; }
+      50% { background-color: rgba(239, 68, 68, 0.8); }
+    }
+    @keyframes flash-green {
+      0%, 100% { background-color: transparent; }
+      50% { background-color: rgba(52, 211, 153, 0.8); }
+    }
+    @keyframes shake-horizontal {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-8px); }
+      40%, 80% { transform: translateX(8px); }
+    }
+    @keyframes dialogFadeSlide {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Animate classes */
+    .animate-attack {
+      animation: shake-horizontal 0.5s ease;
+    }
+    .animate-heal {
+      animation: flash-green 1s ease;
+    }
+    .animate-damage {
+      animation: flash-red 1s ease;
+    }
+
+    /* Responsive */
+    @media (max-width: 480px) {
+      #game-container {
+        padding: 20px;
+      }
+      .actions-container button.action-btn {
+        flex: 1 1 100%;
+        justify-content: center;
+      }
+      .element-badges {
+        justify-content: center;
+      }
+    }
+
+    /* Login modal */
+    #login-modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      backdrop-filter: blur(6px);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      user-select: none;
+      padding: 20px;
+    }
+    #login-modal {
+      background: #29223E;
+      border-radius: 20px;
+      width: 360px;
+      max-width: 95vw;
+      padding: 28px 36px;
+      box-shadow: 0 4px 38px rgba(139, 92, 246, 0.7);
+      text-align: center;
+      color: var(--color-primary-light);
+      user-select: none;
+      font-weight: 700;
+      font-size: 1.15rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      outline: none;
+    }
+    #login-modal h2 {
+      margin: 0 0 22px;
+      font-weight: 800;
+      font-size: 1.4rem;
+      color: #d4c3ff;
+      letter-spacing: 0.12em;
+    }
+    #login-modal label {
+      font-weight: 600;
+      display: block;
+      margin-bottom: 12px;
+      letter-spacing: 0.02em;
+      color: #c1afff;
+      text-transform: none;
+      font-size: 1rem;
+    }
+    #username-input {
+      width: 100%;
+      padding: 12px 16px;
+      border-radius: 12px;
+      border: none;
+      box-shadow: inset 0 1px 6px rgba(139, 92, 246, 0.75);
+      font-size: 1rem;
+      font-weight: 600;
+      outline-color: var(--color-primary-light);
+      color: var(--color-text);
+      user-select: text;
+      transition: box-shadow 0.3s ease;
+    }
+    #username-input:focus {
+      box-shadow:
+        0 0 12px 3px rgba(187, 153, 255, 1);
+    }
+    #login-btn {
+      margin-top: 24px;
+      background: var(--color-primary);
+      color: white;
+      border: none;
+      border-radius: 32px;
+      padding: 16px 42px;
+      font-weight: 800;
+      font-size: 1.125rem;
+      cursor: pointer;
+      box-shadow: 0 8px 20px rgba(139, 92, 246, 0.9);
+      transition: background-color 0.4s ease, transform 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      user-select: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      width: 100%;
+    }
+    #login-btn[disabled] {
+      background: #6f62b8;
+      cursor: not-allowed;
+      box-shadow: none;
+      color: #ccc;
+      text-shadow: none;
+    }
+    #login-btn:not([disabled]):hover, #login-btn:not([disabled]):focus-visible {
+      background-color: var(--color-primary-light);
+      box-shadow: 0 12px 30px rgba(207, 148, 255, 0.9);
+      transform: translateY(-3px);
+      outline: none;
+    }
+    #login-btn:focus-visible {
+      outline: 3px solid var(--color-primary-light);
+      outline-offset: 3px;
+    }
+    #login-error {
+      color: var(--color-danger);
+      margin-top: 12px;
+      font-weight: 600;
+      font-size: 0.875rem;
+      min-height: 20px;
+    }
+    #login-confirmation {
+      background: #383060cc;
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin-top: 20px;
+      font-weight: 700;
+      color: var(--color-success);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      font-size: 1.05rem;
+      box-shadow:
+        0 0 10px 3px rgba(34, 197, 94, 0.8);
+      text-align: center;
+    }
+
+    /* Icon spin for loading */
+    .loading-icon {
+      display: inline-block;
+      animation: spin 1.6s linear infinite;
+      user-select: none;
+    }
+    @keyframes spin {
+      from {
+        transform: rotate(0deg);
+      } to {
+        transform: rotate(360deg);
+      }
+    }
+
+  </style>
+</head>
+<body>
+
+  <!-- Login modal -->
+  <div id="login-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="login-title" aria-describedby="login-desc">
+    <div id="login-modal" tabindex="0">
+      <h2 id="login-title">Dungeon Login</h2>
+      <label for="username-input">Enter Player Name</label>
+      <input id="username-input" type="text" autocomplete="off" minlength="3" maxlength="20" placeholder="Your name..." aria-required="true" aria-describedby="login-succes" />
+      <button id="login-btn" aria-disabled="true" disabled>
+        <span class="material-icons" aria-hidden="true">login</span> Login
+      </button>
+      <div id="login-error" role="alert" aria-live="assertive"></div>
+      <div id="login-confirmation" style="display:none;" aria-live="polite"></div>
+    </div>
+  </div>
+
+  <!-- Game container hidden below login -->
+  <div id="game-container" role="main" aria-label="Dungeon Game" tabindex="-1" style="display:none;">
+    <header>
+      <div style="display:flex; align-items:center;">
+        <h1>Dungeon Adventure</h1>
+        <div class="level-display" aria-live="polite" aria-atomic="true" id="level-display">Level 1 of 5</div>
+      </div>
+      <div class="header-right">
+        <button id="logout-btn" aria-label="Logout and return to login screen" title="Logout">
+          <span class="material-icons" aria-hidden="true">exit_to_app</span> Logout
+        </button>
+      </div>
+    </header>
+    <section class="status-row" aria-label="Health Status">
+      <div>
+        <span class="material-icons" aria-hidden="true">person</span>
+        <strong>Player Health:</strong>
+        <span class="element-badges" aria-label="Player elemental attributes">
+          <span class="element-badge fire" title="Fire Element">
+            <span class="material-icons" aria-hidden="true">whatshot</span> Fire
+          </span>
+          <span class="element-badge lightning" title="Lightning Element">
+            <span class="material-icons" aria-hidden="true">flash_on</span> Lightning
+          </span>
+        </span>
+      </div>
+      <div class="health-bar-container" role="progressbar" aria-valuemin="0" aria-valuemax="100" id="player-health-bar-container" aria-valuenow="100">
+        <div class="health-bar" id="player-health-bar" style="width: 100%;"></div>
+      </div>
+      <span class="health-text" id="player-health-text">100 / 100</span>
+    </section>
+    <section class="status-row" aria-label="Enemy Health Status" id="enemy-health-section" style="display:none;">
+      <div>
+        <span class="material-icons" aria-hidden="true">android</span>
+        <strong>Enemy Health:</strong>
+        <span class="element-badges" aria-label="Enemy elemental attribute">
+          <span class="element-badge fire" title="Fire Element">
+            <span class="material-icons" aria-hidden="true">whatshot</span> Fire
+          </span>
+        </span>
+      </div>
+      <div class="health-bar-container" role="progressbar" aria-valuemin="0" aria-valuemax="100" id="enemy-health-bar-container" aria-valuenow="100">
+        <div class="health-bar" id="enemy-health-bar" style="width: 100%;"></div>
+      </div>
+      <span class="health-text" id="enemy-health-text">100 / 100</span>
+    </section>
+    <main>
+      <!-- Dungeon Exploration -->
+      <section id="dungeon-exploration" aria-label="Dungeon Exploration">
+        <div id="exploration-description" tabindex="0" aria-live="polite" aria-atomic="true" >
+          You enter a dark, damp dungeon. Shadows flicker in the distance. Press continue to explore.
+        </div>
+        <div id="exploration-controls">
+          <button id="explore-continue-btn" aria-label="Continue exploring the dungeon">
+            <span class="material-icons" aria-hidden="true">navigate_next</span> Continue Exploring
+          </button>
+        </div>
+      </section>
+
+      <!-- Fight Section -->
+      <section id="fight-section" aria-label="Fight Section">
+        <div class="dungeon-description" aria-live="polite" aria-atomic="true" id="dungeon-description" tabindex="0">
+          Preparing for battle...
+        </div>
+        <div class="dialog-container" id="dialog-container" aria-live="polite" aria-atomic="false" tabindex="0" aria-label="Game Dialogue">
+          <!-- Dialog entries inserted here dynamically -->
+        </div>
+        <div class="actions-container" aria-label="Player Action Buttons">
+          <button class="action-btn" id="attack-btn" aria-disabled="false" aria-label="Attack the enemy">
+            <span class="material-icons" aria-hidden="true">sports_martial_arts</span> Attack
+          </button>
+          <button class="action-btn" id="defend-btn" aria-disabled="false" aria-label="Defend against enemy attack">
+            <span class="material-icons" aria-hidden="true">shield</span> Defend
+          </button>
+          <button class="action-btn" id="heal-btn" aria-disabled="false" aria-label="Heal yourself">
+            <span class="material-icons" aria-hidden="true">healing</span> Heal
+          </button>
+        </div>
+      </section>
+    </main>
+    <footer class="footer-note" aria-live="polite" aria-atomic="true" id="game-status" tabindex="0">
+      Welcome to the Dungeon Adventure! Choose your action.
+    </footer>
+  </div>
+
+  <script>
+    (() => {
+      // Login Elements
+      const loginOverlay = document.getElementById('login-modal-overlay');
+      const loginModal = document.getElementById('login-modal');
+      const usernameInput = document.getElementById('username-input');
+      const loginBtn = document.getElementById('login-btn');
+      const loginError = document.getElementById('login-error');
+      const loginConfirmation = document.getElementById('login-confirmation');
+
+      // Game Elements
+      const gameContainer = document.getElementById('game-container');
+      const levelDisplay = document.getElementById('level-display');
+      const playerHealthBar = document.getElementById('player-health-bar');
+      const playerHealthBarContainer = document.getElementById('player-health-bar-container');
+      const playerHealthText = document.getElementById('player-health-text');
+      const enemyHealthBar = document.getElementById('enemy-health-bar');
+      const enemyHealthBarContainer = document.getElementById('enemy-health-bar-container');
+      const enemyHealthText = document.getElementById('enemy-health-text');
+      const enemyHealthSection = document.getElementById('enemy-health-section');
+      const dungeonExplorationSection = document.getElementById('dungeon-exploration');
+      const explorationDescription = document.getElementById('exploration-description');
+      const explorationContinueBtn = document.getElementById('explore-continue-btn');
+      const fightSection = document.getElementById('fight-section');
+      const dungeonDescription = document.getElementById('dungeon-description');
+      const dialogContainer = document.getElementById('dialog-container');
+      const gameStatus = document.getElementById('game-status');
+      const attackBtn = document.getElementById('attack-btn');
+      const defendBtn = document.getElementById('defend-btn');
+      const healBtn = document.getElementById('heal-btn');
+      const logoutBtn = document.getElementById('logout-btn');
+
+      // Constants and variables
+      const maxPlayerHealth = 100;
+      const totalLevels = 5;
+      let currentLevel = 1;
+      let playerHealth = maxPlayerHealth;
+      let enemyHealth = 100;
+      let playerDefending = false;
+      let enemyDefending = false;
+      let gameStage = 'exploration';
+      let currentExplorationStep = 0;
+
+      // Exploration steps (5 each level)
+      const explorationSteps = [
+        [
+          "You enter a dark, damp dungeon. Shadows flicker in the distance.",
+          "The air smells of damp earth and old stone. Proceed with caution.",
+          "You notice faint markings on the walls... something watches you.",
+          "A sudden chill runs through your spine; keep moving.",
+          "You hear distant footsteps echoing... Prepare yourself."
+        ],
+        [
+          "The dungeon corridor narrows mysteriously.",
+          "You hear skittering sounds nearby. Stay alert.",
+          "Old bones litter the floor here; danger is close.",
+          "You spot scratch marks on the walls, warning of danger ahead.",
+          "A whisper rustles through the darkness - your heart races."
+        ],
+        [
+          "You step into a wide chamber, eerie silence all around.",
+          "Torches flicker dimly, throwing long shadows.",
+          "You sense a powerful presence watching you.",
+          "Suddenly, a scuttling noise behind the pillars startles you.",
+          "The air tastes thick, like magic and menace."
+        ],
+        [
+          "An icy chill runs down your spine in this shadowy crypt.",
+          "Whispers echo softly, summoning fear.",
+          "A flicker of dark magic hums in the air.",
+          "Ancient glyphs glow faintly on the walls.",
+          "You spot a mysterious orb pulsing with energy."
+        ],
+        [
+          "The final chamber looms, massive stone carved with draconic runes.",
+          "The heat before you pulses with fiery menace.",
+          "You breathe deeply; the ultimate battle awaits.",
+          "Charred bones and ash litter the ground, remnants of past fighters.",
+          "A deep rumble shakes the cavern; the Dragon Lord approaches."
+        ],
+      ];
+
+      // Enemy Data
+      const enemyDialogs = [
+        {
+          enemyName: "Goblin Grunt",
+          attackPhrases: [
+            "Goblin Grunt snarls and swings its club!",
+            "The Goblin Grunt lunges forward aggressively!",
+            "Goblin Grunt tries to catch you off guard!",
+          ],
+          defendPhrases: [
+            "Goblin Grunt braces for your attack!",
+            "Goblin Grunt raises its club defensively!",
+            "Goblin Grunt prepares to counter!",
+          ],
+          healPhrases: [
+            "Goblin Grunt snatches a healing herb and recovers!",
+            "The Goblin Grunt quickly bandages its wounds!",
+            "Goblin Grunt uses a mysterious potion!",
+          ],
+          health: 80,
+          attackPowerRange: [8, 15],
+          healPowerRange: [6, 12],
+        },
+        {
+          enemyName: "Cave Spider",
+          attackPhrases: [
+            "Cave Spider strikes its venomous fangs!",
+            "The Cave Spider scrambles to bite!",
+            "Cave Spider lashes out with poisonous legs!",
+          ],
+          defendPhrases: [
+            "Cave Spider hardens its exoskeleton!",
+            "Cave Spider recoils, ready to counterstrike!",
+            "Cave Spider prepares a swift dodge!",
+          ],
+          healPhrases: [
+            "Cave Spider regenerates its limbs!",
+            "The Cave Spider secretes a healing fluid!",
+            "Cave Spider retreats briefly to recover!",
+          ],
+          health: 90,
+          attackPowerRange: [10, 18],
+          healPowerRange: [5, 14],
+        },
+        {
+          enemyName: "Orc Warrior",
+          attackPhrases: [
+            "Orc Warrior swings his massive axe with fury!",
+            "The Orc Warrior charges at you!",
+            "Orc Warrior shouts a battle cry and attacks!",
+          ],
+          defendPhrases: [
+            "Orc Warrior lifts his heavy shield!",
+            "Orc Warrior prepares a counter-attack!",
+            "Orc Warrior snarls and tightens his grip!",
+          ],
+          healPhrases: [
+            "Orc Warrior drinks a goblet of ale restoring strength!",
+            "Orc Warrior bites a healing root!",
+            "Orc Warrior takes a moment to catch his breath!",
+          ],
+          health: 115,
+          attackPowerRange: [15, 23],
+          healPowerRange: [10, 18],
+        },
+        {
+          enemyName: "Shadow Mage",
+          attackPhrases: [
+            "Shadow Mage casts a bolt of dark energy!",
+            "The Shadow Mage summons shadowy tendrils!",
+            "Shadow Mage releases a burst of arcane power!",
+          ],
+          defendPhrases: [
+            "Shadow Mage conjures a protective shield!",
+            "Shadow Mage fades briefly into shadows!",
+            "Shadow Mage prepares a magic counter!",
+          ],
+          healPhrases: [
+            "Shadow Mage chants an ancient healing spell!",
+            "Shadow Mage absorbs energy from darkness!",
+            "Shadow Mage mends wounds with dark magic!",
+          ],
+          health: 120,
+          attackPowerRange: [20, 28],
+          healPowerRange: [12, 20],
+        },
+        {
+          enemyName: "Dragon Lord",
+          attackPhrases: [
+            "Dragon Lord breathes a scorching flame!",
+            "Dragon Lord slashes with razor-sharp claws!",
+            "Dragon Lord roars and unleashes a fiery blast!",
+          ],
+          defendPhrases: [
+            "Dragon Lord shields itself with scales of steel!",
+            "Dragon Lord retreats to reassess the fight!",
+            "Dragon Lord prepares to counter your move!",
+          ],
+          healPhrases: [
+            "Dragon Lord absorbs the fire's warmth to heal!",
+            "Dragon Lord nuzzles the flame and recovers!",
+            "Dragon Lord's wounds mend with ancient magic!",
+          ],
+          health: 150,
+          attackPowerRange: [23, 32],
+          healPowerRange: [15, 25],
+        }
+      ];
+
+      // Utility Functions
+      const clamp = (num, min, max) => Math.min(Math.max(num, min), max);
+      const randomInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+      const randomChoice = arr => arr[Math.floor(Math.random() * arr.length)];
+      function enemyData() { return enemyDialogs[currentLevel - 1]; }
+
+      // Animate health bar changes (retrigger animation)
+      function animateHealthBar(isPlayer, type) {
+        const bar = isPlayer ? playerHealthBar : enemyHealthBar;
+        const className = type === 'damage' ? 'animate-damage' : 'animate-heal';
+        bar.classList.remove(className);
+        void bar.offsetWidth; // Trigger reflow
+        bar.classList.add(className);
+      }
+      // Animate attack icon
+      function animateAttackIcon(isPlayer) {
+        if (!isPlayer) return;
+        const button = attackBtn;
+        const className = 'animate-attack';
+        button.classList.remove(className);
+        void button.offsetWidth;
+        button.classList.add(className);
+      }
+
+      // Append dialog text with fade slide animation
+      function appendDialog(isPlayer, text) {
+        const entry = document.createElement('div');
+        entry.className = 'dialog-entry ' + (isPlayer ? 'player' : 'enemy');
+        const icon = document.createElement('span');
+        icon.className = 'material-icons';
+        icon.textContent = isPlayer ? 'person' : 'android';
+        entry.appendChild(icon);
+        const msg = document.createElement('div');
+        msg.textContent = text;
+        entry.appendChild(msg);
+        dialogContainer.appendChild(entry);
+        dialogContainer.scrollTop = dialogContainer.scrollHeight;
+      }
+
+      // Clear dialog
+      function clearDialogs() {
+        dialogContainer.innerHTML = '';
+      }
+
+      // Set health bars and texts
+      function updateHealthBars() {
+        const pPercent = (playerHealth / maxPlayerHealth) * 100;
+        playerHealthBar.style.width = pPercent + '%';
+        playerHealthBarContainer.setAttribute('aria-valuenow', Math.round(pPercent));
+        playerHealthText.textContent = `${playerHealth} / ${maxPlayerHealth}`;
+        playerHealthBar.classList.toggle('low', playerHealth <= 30);
+
+        const eMaxHp = enemyData().health;
+        const ePercent = (enemyHealth / eMaxHp) * 100;
+        enemyHealthBar.style.width = ePercent + '%';
+        enemyHealthBarContainer.setAttribute('aria-valuenow', Math.round(ePercent));
+        enemyHealthText.textContent = `${enemyHealth} / ${eMaxHp}`;
+        enemyHealthBar.classList.toggle('low', enemyHealth <= eMaxHp * 0.3);
+      }
+
+      // Disable and enable buttons
+      function disableActions() {
+        attackBtn.disabled = true;
+        attackBtn.setAttribute('aria-disabled', 'true');
+        defendBtn.disabled = true;
+        defendBtn.setAttribute('aria-disabled', 'true');
+        healBtn.disabled = true;
+        healBtn.setAttribute('aria-disabled', 'true');
+      }
+      function enableActions() {
+        attackBtn.disabled = false;
+        attackBtn.setAttribute('aria-disabled', 'false');
+        defendBtn.disabled = false;
+        defendBtn.setAttribute('aria-disabled', 'false');
+        healBtn.disabled = false;
+        healBtn.setAttribute('aria-disabled', 'false');
+      }
+
+      // Weighted random for enemy AI actions
+      function weightedRandomChoice(choices) {
+        let totalWeight = choices.reduce((acc, c) => acc + c[1], 0);
+        let random = Math.random() * totalWeight;
+        for (const [choice, weight] of choices) {
+          if (random < weight) return choice;
+          random -= weight;
+        }
+        return choices[0][0];
+      }
+
+      // Delay util
+      function delay(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+      }
+
+      // Exploration vars
+      const currentExplorationStep = 0;
+
+
+      // --- Exploration ---
+
+      explorationContinueBtn.addEventListener('click', () => {
+        if (gameStage !== 'exploration') return;
+        const steps = explorationSteps[currentLevel - 1];
+        currentExplorationStep++;
+        if (currentExplorationStep < steps.length) {
+          animateExplorationText(steps[currentExplorationStep]);
+        } else {
+          startFight();
+        }
+      });
+
+      function animateExplorationText(newText) {
+        explorationDescription.classList.add('animate-glow');
+        explorationDescription.style.opacity = '0';
+        setTimeout(() => {
+          explorationDescription.textContent = newText;
+          explorationDescription.style.opacity = '1';
+          explorationDescription.classList.add('animate-glow');
+        }, 400);
+        gameStatus.textContent = `Exploring: ${currentExplorationStep + 1} / ${explorationSteps[currentLevel - 1].length}`;
+      }
+
+      // --- Fight mechanics ---
+
+      async function enemyTurn() {
+        disableActions();
+        await delay(1200);
+        const enemy = enemyData();
+        const hpPercent = enemyHealth / enemy.health;
+        let actionChoice = hpPercent < 0.35
+          ? weightedRandomChoice([['heal', 0.5], ['attack', 0.4], ['defend', 0.1]])
+          : weightedRandomChoice([['attack', 0.7], ['defend', 0.2], ['heal', 0.1]]);
+
+        switch(actionChoice) {
+          case 'attack':
+            appendDialog(false, randomChoice(enemy.attackPhrases));
+            await animateAttackSequence(false, 'enemy');
+            break;
+          case 'defend':
+            appendDialog(false, randomChoice(enemy.defendPhrases));
+            enemyDefending = true;
+            gameStatus.textContent = "Enemy is defending this turn.";
+            await delay(1000);
+            break;
+          case 'heal':
+            appendDialog(false, randomChoice(enemy.healPhrases));
+            await animateHealSequence(false);
+            break;
+        }
+        enableActions();
+        checkGameState();
+      }
+
+      // Player actions
+      async function onAttack() {
+        if (gameStage !== 'fight') return;
+        disableActions();
+        appendDialog(true, "You strike the enemy!");
+        await animateAttackSequence(true, 'player');
+      }
+
+      async function onDefend() {
+        if (gameStage !== 'fight') return;
+        disableActions();
+        playerDefending = true;
+        appendDialog(true, "You brace yourself to defend.");
+        gameStatus.textContent = "You are defending this turn.";
+        await delay(1100);
+        checkGameState(true);
+      }
+
+      async function onHeal() {
+        if (gameStage !== 'fight') return;
+        disableActions();
+        appendDialog(true, "You quickly heal your wounds!");
+        await animateHealSequence(true);
+      }
+
+      // Attack animation sequence for player or enemy
+      async function animateAttackSequence(isPlayer, who) {
+        animateAttackIcon(isPlayer);
+        await delay(700);
+
+        let damage;
+        if (isPlayer) {
+          damage = randomInt(12, 20);
+          if (enemyDefending) {
+            damage = Math.floor(damage / 2);
+            appendDialog(false, "Enemy defends and reduces damage!");
+            await delay(900);
+          }
+          enemyHealth = clamp(enemyHealth - damage, 0, enemyData().health);
+          animateHealthBar(false, 'damage');
+          updateHealthBars();
+          gameStatus.textContent = `You dealt ${damage} damage to the enemy.`;
+          await delay(600);
+          enemyDefending = false;
+        } else {
+          damage = randomInt(enemyData().attackPowerRange[0], enemyData().attackPowerRange[1]);
+          if (playerDefending) {
+            damage = Math.floor(damage / 2);
+            appendDialog(true, "You defend and reduce the damage!");
+            await delay(900);
+          }
+          playerHealth = clamp(playerHealth - damage, 0, maxPlayerHealth);
+          animateHealthBar(true, 'damage');
+          updateHealthBars();
+          gameStatus.textContent = `Enemy attacked and dealt ${damage} damage!`;
+          await delay(800);
+          playerDefending = false;
+        }
+        checkGameState(!isPlayer);
+      }
+
+      // Heal animation sequence for player or enemy
+      async function animateHealSequence(isPlayer) {
+        let healAmount;
+        if (isPlayer) {
+          healAmount = randomInt(15, 25);
+          playerHealth = clamp(playerHealth + healAmount, 0, maxPlayerHealth);
+          animateHealthBar(true, 'heal');
+          updateHealthBars();
+          gameStatus.textContent = `You healed ${healAmount} health points.`;
+          await delay(1200);
+          checkGameState(true);
+        } else {
+          healAmount = randomInt(enemyData().healPowerRange[0], enemyData().healPowerRange[1]);
+          enemyHealth = clamp(enemyHealth + healAmount, 0, enemyData().health);
+          animateHealthBar(false, 'heal');
+          updateHealthBars();
+          gameStatus.textContent = `Enemy healed ${healAmount} health!`;
+          enemyDefending = false;
+          await delay(1200);
+          checkGameState();
+        }
+      }
+
+      // Check game state for win/loss and proceed accordingly
+      async function checkGameState(playerJustActed = false) {
+        updateHealthBars();
+        if (enemyHealth <= 0) {
+          appendDialog(false, `The ${enemyData().enemyName} has been defeated!`);
+          gameStatus.textContent = `You defeated the ${enemyData().enemyName}!`;
+          disableActions();
+          await delay(1500);
+          advanceLevel();
+          return;
+        }
+        if (playerHealth <= 0) {
+          appendDialog(false, "You have fallen in battle...");
+          gameStatus.textContent = "Game Over. You were defeated.";
+          disableActions();
+          gameStage = 'gameover';
+          return;
+        }
+        if (playerJustActed) {
+          await enemyTurn();
+        } else {
+          enableActions();
+        }
+      }
+
+      // Advance level or end game
+      async function advanceLevel() {
+        currentLevel++;
+        if (currentLevel > totalLevels) {
+          gameStatus.textContent = "You have conquered the entire dungeon. Victory!";
+          dungeonDescription.textContent = "Congratulations! You completed all levels!";
+          fightSection.style.display = 'none';
+          enemyHealthSection.style.display = 'none';
+          dungeonExplorationSection.style.display = 'none';
+          disableActions();
+          gameStage = 'completed';
+        } else {
+          gameStage = 'exploration';
+          dungeonExplorationSection.style.display = 'flex';
+          fightSection.style.display = 'none';
+          enemyHealthSection.style.display = 'none';
+          explorationDescription.textContent = explorationSteps[currentLevel - 1][0];
+          explorationDescription.focus();
+          currentExplorationStep = 0;
+          playerHealth = clamp(playerHealth + 20, 0, maxPlayerHealth);
+          updateHealthBars();
+          levelDisplay.textContent = `Level ${currentLevel} of ${totalLevels}`;
+          gameStatus.textContent = `Level up! Start exploring Level ${currentLevel}.`;
+          enableActions();
+        }
+      }
+
+      // Start fight phase
+      function startFight() {
+        gameStage = 'fight';
+        currentExplorationStep = 0;
+        dungeonExplorationSection.style.display = 'none';
+        fightSection.style.display = 'flex';
+        enemyHealthSection.style.display = 'flex';
+        clearDialogs();
+        playerHealth = maxPlayerHealth;
+        enemyHealth = enemyData().health;
+        playerDefending = false;
+        enemyDefending = false;
+        gameStatus.textContent = `Choose your action against the ${enemyData().enemyName}.`;
+        levelDisplay.textContent = `Level ${currentLevel} of ${totalLevels}`;
+        dungeonDescription.textContent = `You encounter the ${enemyData().enemyName}! Prepare for battle!`;
+        updateHealthBars();
+        enableActions();
+      }
+
+      // Start new game session
+      function startGame() {
+        gameStage = 'exploration';
+        currentLevel = 1;
+        currentExplorationStep = 0;
+        dungeonExplorationSection.style.display = 'flex';
+        fightSection.style.display = 'none';
+        enemyHealthSection.style.display = 'none';
+        explorationDescription.textContent = explorationSteps[0][0];
+        explorationDescription.focus();
+        gameStatus.textContent = "Welcome to the Dungeon Adventure! Begin exploring.";
+        playerHealth = maxPlayerHealth;
+        updateHealthBars();
+        levelDisplay.textContent = `Level ${currentLevel} of ${totalLevels}`;
+        enableActions();
+      }
+
+      // Bind player action buttons
+      attackBtn.addEventListener('click', onAttack);
+      defendBtn.addEventListener('click', onDefend);
+      healBtn.addEventListener('click', onHeal);
+
+      // Accessibility: player shortcut keys
+      document.addEventListener('keydown', e => {
+        if (attackBtn.disabled) return;
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+        if(gameStage !== 'fight') return;
+        if (e.key === 'a' || e.key === 'A') onAttack();
+        else if (e.key === 'd' || e.key === 'D') onDefend();
+        else if (e.key === 'h' || e.key === 'H') onHeal();
+      });
+
+      // Logout button logic
+      logoutBtn.addEventListener('click', () => {
+        if (!confirm("Are you sure you want to logout and return to the login screen?")) return;
+        gameContainer.style.display = 'none';
+        loginOverlay.style.display = 'flex';
+
+        usernameInput.value = '';
+        usernameInput.disabled = false;
+        loginBtn.disabled = true;
+        loginBtn.setAttribute('aria-disabled', 'true');
+        loginBtn.innerHTML = `<span class="material-icons" aria-hidden="true">login</span> Login`;
+        loginError.textContent = '';
+        loginConfirmation.style.display = 'none';
+
+        currentLevel = 1;
+        playerHealth = maxPlayerHealth;
+        enemyHealth = 100;
+        currentExplorationStep = 0;
+        gameStage = 'exploration';
+
+        clearDialogs();
+        enableActions();
+        usernameInput.focus();
+      });
+
+      // ****** Login logic ******
+
+      // Enable login button only if username is >=3 chars
+      usernameInput.addEventListener('input', () => {
+        const val = usernameInput.value.trim();
+        if (val.length >= 3 && val.length <= 20) {
+          loginBtn.disabled = false;
+          loginBtn.setAttribute('aria-disabled', 'false');
+          loginError.textContent = '';
+        } else {
+          loginBtn.disabled = true;
+          loginBtn.setAttribute('aria-disabled', 'true');
+          loginError.textContent = val.length > 20 ? 'Maximum 20 characters' : (val.length < 3 ? 'Minimum 3 characters' : '');
+        }
+      });
+
+      // On login press
+      loginBtn.addEventListener('click', () => {
+        const username = usernameInput.value.trim();
+        if (username.length < 3 || username.length > 20) {
+          loginError.textContent = 'Username must be between 3 and 20 characters.';
+          return;
+        }
+
+        loginBtn.disabled = true;
+        loginBtn.innerHTML = `<span class="material-icons loading-icon" aria-hidden="true">autorenew</span> Logging in...`;
+        usernameInput.disabled = true;
+        loginError.textContent = '';
+        loginConfirmation.style.display = 'none';
+
+        setTimeout(() => {
+          loginConfirmation.style.display = 'block';
+          loginConfirmation.textContent = `Welcome, ${username}! Preparing your adventure...`;
+          loginBtn.innerHTML = `<span class="material-icons" aria-hidden="true">check_circle</span> Logged In`;
+
+          setTimeout(() => {
+            loginOverlay.style.display = 'none';
+            gameContainer.style.display = 'flex';
+            usernameInput.disabled = false;
+            usernameInput.value = '';
+            loginBtn.disabled = true;
+            loginBtn.setAttribute('aria-disabled', 'true');
+            loginBtn.innerHTML = `<span class="material-icons" aria-hidden="true">login</span> Login`;
+            loginConfirmation.style.display = 'none';
+            loginError.textContent = '';
+            loginModal.removeAttribute('tabindex');
+            startGame();
+            gameContainer.focus();
+          }, 1800);
+        }, 1600);
+      });
+
+      // Accessibility: focus trap in login modal
+      loginModal.addEventListener('keydown', (ev) => {
+        if(ev.key === 'Tab') {
+          const focusableElements = loginModal.querySelectorAll('input, button');
+          const firstElem = focusableElements[0];
+          const lastElem = focusableElements[focusableElements.length -1];
+          if (ev.shiftKey) {
+            if(document.activeElement === firstElem) {
+              ev.preventDefault();
+              lastElem.focus();
+            }
+          } else {
+            if(document.activeElement === lastElem) {
+              ev.preventDefault();
+              firstElem.focus();
+            }
+          }
+        }
+      });
+
+      window.addEventListener('load', () => {
+        usernameInput.focus();
+      });
+    })();
+  </script>
+</body>
+</html>
+
